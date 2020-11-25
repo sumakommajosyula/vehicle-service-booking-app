@@ -2,15 +2,18 @@
  * Controller layer for handling customer related HTTP requests
  */
 
-import { Controller, Get, Post, Body, Res, HttpStatus} from '@nestjs/common';
-import {CustomerService} from './customers.service';
-import{ CustomerDto} from './customers.dto';
-import {ICustomer} from './customers.interface';
+import { Controller, Get, Post, Body, Res, HttpStatus } from '@nestjs/common';
+import { CustomerService } from './customers.service';
+import { CustomerPersonalInfoDto } from './dto/customer-personal-info.dto';
+import { VehicleDto } from './dto/vehicle.dto';
+import { AlterateDriverDto } from './dto/alternate-driver.dto'
+
+import { ICustomer } from './customers.interface';
 import { Response } from 'express';
 
 @Controller('customer')
 export class CustomerController {
-    constructor(private readonly customerService: CustomerService) {}
+    constructor(private readonly customerService: CustomerService) { }
 
     /**
      * @returns list of all customers
@@ -26,11 +29,13 @@ export class CustomerController {
      * @param customerDto : Request body object to be sent to the API
      * Format: 
      * {
-        "name": (string) Name of the customer,
-        "phone_number": (string) Contact number of the customer,
-        "email_address": (string) Email id of the customer,
-        "address": (string) Address of the customer,
-        "password": (string) Sign In password,
+        "personal_info":{
+            "name": (string) Name of the customer,
+            "phone_number": (string) Contact number of the customer,
+            "email_address": (string) Email id of the customer,
+            "address": (string) Address of the customer,
+            "password": (string) Sign In password,
+        },
         "vehicles": [
             {
                 "number_plate": (string) Vehicle number as on the number plate, 
@@ -49,15 +54,14 @@ export class CustomerController {
     }
     */
     @Post()
-    async saveCustomer(@Res() res: Response, @Body() customerDto: CustomerDto) {
-           
-        let customerDetails = await this.customerService.saveCustomer(customerDto);
-
-        if(!customerDetails.status){
+    async saveCustomer(@Res() res: Response, @Body('personal_info') personalInfo: CustomerPersonalInfoDto, @Body('vehicles') vehicleInfo: VehicleDto, @Body('alternate_drivers') alternateDrivers: AlterateDriverDto[]) {
+        let customerDetails = await this.customerService.saveCustomer(personalInfo, vehicleInfo, alternateDrivers);
+       
+        if (customerDetails.status != undefined) {
             return res.status(HttpStatus.BAD_REQUEST).json(customerDetails);
         }
-        else{
-            return res.status(HttpStatus.OK).json({status: true, data: customerDetails});
-        }          
+        else {
+            return res.status(HttpStatus.OK).json({ status: true, data: customerDetails });
+        }
     }
 }

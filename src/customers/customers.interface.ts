@@ -4,17 +4,14 @@
 import { Document } from 'mongoose';
 
 export interface ICustomer extends Document {
-    name: string
-    phone_number: number
-    email_address: string
-    address: string
-    password: string
-    alternate_drivers: [
-        {
-            name: string,
-            phone_number: string
-        }
-    ]
+    personal_info: {
+        id: string
+        name: string
+        phone_number: number
+        email_address: string
+        address: string
+        password: string
+    }
     vehicles: [
         {
             number_plate: string,
@@ -22,6 +19,12 @@ export interface ICustomer extends Document {
             model: string,
             category: string,
             fuel_type: string
+        }
+    ]
+    alternate_drivers: [
+        {
+            name: string,
+            phone_number: string
         }
     ]
 }

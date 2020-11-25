@@ -6,8 +6,8 @@ import { Module } from '@nestjs/common';
 import { CustomerController } from './customers.controller';
 import { CustomerService } from './customers.service';
 import { MongooseModule } from '@nestjs/mongoose';
-import { CustomerSchema } from './customers.schema';
-import { VehicleSchema } from './vehicle.schema';
+import { CustomerSchema } from './schema/customers.schema';
+import { VehicleSchema } from './schema/vehicle.schema';
 
 @Module({
   imports: [
