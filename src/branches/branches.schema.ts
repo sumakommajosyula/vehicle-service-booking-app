@@ -1,33 +1,49 @@
+/**
+ * Mongoose schema for branch collection
+ */
+
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { v4 as uuid } from 'uuid';
 
 export type branchDocument = Branch & Document;
+
 @Schema({ validateBeforeSave: true})
 export class Branch{
 
-@Prop()
-name: string;
+    @Prop({
+        required: true,
+        unique: true
+    })
+    name: string;
 
-@Prop()
-slots: [];
+    @Prop({
+        required: true
+    })
+    slots: [];
 
-@Prop()
-technicians: [{id: { type : String , unique : true}, name: String, phone_number: String}]
+    @Prop()
+    technicians: [
+        { 
+            id: { 
+                type : string,
+                unique : true
+            }, 
+            name: string, 
+            phone_number: string
+        }
+    ]
+
+    @Prop()
+    created_by: string
+
+    @Prop()
+    creation_date: Date
 
 
-@Prop()
-created_by: String
+    @Prop()
+    last_updated_by: string
 
-@Prop()
-creation_date: Date
-
-
-@Prop()
-last_updated_by: String
-
-@Prop()
-last_updated_date: Date
-    
-
+    @Prop()
+    last_updated_date: Date
 }
+
 export const BranchSchema = SchemaFactory.createForClass(Branch);

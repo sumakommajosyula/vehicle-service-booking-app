@@ -1,10 +1,12 @@
-// import * as mongoose from 'mongoose';
+/**
+ * Mongoose schema for bookings collection
+ */
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import {Document} from 'mongoose';
 import * as mongoose from 'mongoose';
 import {Branch} from '../branches/branches.schema';
-import {Customer} from '../customers/schema/customers.schema';
-
+import {CustomerPersonalInfo} from '../customers/schema/personal-info.schema';
+import {Vehicle} from '../customers/schema/vehicle.schema';
 
 
 export type BookingDocument = Booking & Document;
@@ -27,14 +29,14 @@ status: string;
 @Prop({ type: mongoose.Schema.Types.ObjectId, ref: Branch.name})
 branch_id: Branch
 
-// @Prop({ type: mongoose.Schema.Types.ObjectId, ref: Branch.name})
-// technician_id: [Branch]
+@Prop({ type: String, ref: Branch.name})
+technician_id: [Branch]
 
-// @Prop({ type: mongoose.Schema.Types.ObjectId, ref: Customer.name})
-// driver_id: Customer
+@Prop({ type: String, ref: CustomerPersonalInfo.name})
+driver_id: CustomerPersonalInfo
 
-// @Prop({ type: mongoose.Schema.Types.ObjectId, ref: Customer.name})
-// vehicle_id: Customer
+@Prop({ type: String, ref: Vehicle.name})
+vehicle_id: Vehicle
 
 @Prop()
 created_by: String

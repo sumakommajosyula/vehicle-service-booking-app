@@ -1,6 +1,6 @@
 /**
  * Controller layer for handling customer related HTTP requests
- */
+*/
 
 import { Controller, Get, Post, Body, Res, HttpStatus } from '@nestjs/common';
 import { CustomerService } from './customers.service';
@@ -29,13 +29,11 @@ export class CustomerController {
      * @param customerDto : Request body object to be sent to the API
      * Format: 
      * {
-        "personal_info":{
-            "name": (string) Name of the customer,
-            "phone_number": (string) Contact number of the customer,
-            "email_address": (string) Email id of the customer,
-            "address": (string) Address of the customer,
-            "password": (string) Sign In password,
-        },
+        "name": (string) Name of the customer,
+        "phone_number": (string) Contact number of the customer,
+        "email_address": (string) Email id of the customer,
+        "address": (string) Address of the customer,
+        "password": (string) Sign In password,
         "vehicles": [
             {
                 "number_plate": (string) Vehicle number as on the number plate, 
@@ -54,7 +52,7 @@ export class CustomerController {
     }
     */
     @Post()
-    async saveCustomer(@Res() res: Response, @Body('personal_info') personalInfo: CustomerPersonalInfoDto, @Body('vehicles') vehicleInfo: VehicleDto, @Body('alternate_drivers') alternateDrivers: AlterateDriverDto[]) {
+    async saveCustomer(@Res() res: Response, @Body('personal_info') personalInfo: CustomerPersonalInfoDto, @Body('vehicles') vehicleInfo: VehicleDto[], @Body('alternate_drivers') alternateDrivers: AlterateDriverDto[]) {
         let customerDetails = await this.customerService.saveCustomer(personalInfo, vehicleInfo, alternateDrivers);
        
         if (customerDetails.status != undefined) {

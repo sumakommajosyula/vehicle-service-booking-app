@@ -1,4 +1,6 @@
-
+/**
+ * Interface for bookings related HTTP requests
+ */
 import {Document} from 'mongoose';
 
 export interface IBooking extends Document {

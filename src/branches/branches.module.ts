@@ -8,5 +8,6 @@ import { BranchSchema } from './branches.schema';
     imports: [MongooseModule.forFeature([{ name: 'Branch', schema: BranchSchema }])],
   controllers: [BranchController],
   providers: [BranchService],
+  exports: [BranchService]
 })
 export class BranchModule {}

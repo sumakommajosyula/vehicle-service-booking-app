@@ -42,11 +42,33 @@ export class CustomerService {
     /**
      * Updates password based on id
     */
-    updatePassword = async (_id, password) => {
-        return await this.customerModel.findByIdAndUpdate({ _id }, { password: password }).exec();
+    updatePassword = async (id, password, alternateDrivers, vehicleInfo) => {
+        return await this.customerModel.findOneAndUpdate({'personal_info.id': id}, { 'personal_info.password': password, 
+            alternate_drivers: alternateDrivers, vehicles: vehicleInfo}).exec();
     }
 
     /**
+     * Promise function to call 'getVehicleDetails' method
+     * @returns profile id
+     */
+      getVehicleDetailsPromise= async (vehicle) => {
+          console.log("inside veh promise")
+        return  new Promise((resolve) => {
+            this.getVehicleDetails(vehicle.number_plate).then(responseVehicleDetails => {
+                if (responseVehicleDetails.length === 0) {
+                    console.log("new vehicle")
+                    resolve(true)
+                }
+                else {
+                    //vehicle number exists in db
+                    console.log("old vehicle")
+                    resolve(false)
+                }           
+            });
+        })
+    }
+
+      /**
      * Promise function to call 'getCustomerInfoByPhoneNumber' method
      * @returns profile id
      */
@@ -83,7 +105,7 @@ export class CustomerService {
     */
     async saveCustomer(
         personalInfo: CustomerPersonalInfoDto,
-        vehicleInfo: VehicleDto,
+        vehicleInfo: VehicleDto[],
         alternateDrivers: AlterateDriverDto[]
     ): Promise<any> {
         try {
@@ -91,7 +113,9 @@ export class CustomerService {
 
             let resultOfSaveCustomer = await this.getCustomerInfoByPhoneNumber(phoneNumber)
                 .then(responseFromDb => {
-                    if (responseFromDb.length === 0 || (responseFromDb.length !== 0 && !responseFromDb[0].personal_info.password)) {
+                    console.log("responseFromDb of owner in service file");
+                    console.log(responseFromDb)
+                    if (responseFromDb.length === 0 ) {
                     //phone number dosent exist in db indicating that the user is new to the system
 
                         //Hash the password
@@ -100,13 +124,19 @@ export class CustomerService {
                         personalInfo["id"]= uuid();
 
                         //For each alternate driver create a profile as customer
-                        let promiseArray =[];
+                        let callPromise;
                         alternateDrivers.forEach((driver) => {
-                            promiseArray.push(this.getCustomerInfoByPhoneNumberPromise(driver))
+                            callPromise= (this.getCustomerInfoByPhoneNumberPromise(driver))
                         });
+                        // let promiseArray2 ;
 
-                        return Promise.all(promiseArray)
+                        // vehicleInfo.forEach((vehicle) => {
+                        //     promiseArray2 = (this.getCustomerInfoByPhoneNumberPromise(vehicle))
+                        // });
+                        return Promise.all([callPromise])
                         .then(alternateDriverIdsResponse => {
+                            console.log("response from promise");
+                            console.log(alternateDriverIdsResponse)
                             let customer = {
                                 personal_info: personalInfo,
                                 vehicles: vehicleInfo,
@@ -117,6 +147,27 @@ export class CustomerService {
                             //Return the customer added data back as response
                             return newCustomer.save();
                         })               
+                    }
+                    else if(!responseFromDb[0].personal_info.password){
+                        //Phone number is present and password is not present => AD user
+                        //Pick id from db and update the password, assign hsi own set of Ads and vehicles, if any
+
+                        //For each alternate driver create a profile as customer
+                        let promiseArray =[];
+                        alternateDrivers.forEach((driver) => {
+                            promiseArray.push(this.getCustomerInfoByPhoneNumberPromise(driver))
+                        });
+
+                        return Promise.all(promiseArray)
+                        .then(alternateDriverIdsResponse => {
+
+                            //Hash the password
+                            const hash = bcrypt.hashSync(password, saltRounds);
+                            personalInfo.password = hash
+                            return this.updatePassword(responseFromDb[0].personal_info.id, hash, alternateDriverIdsResponse, vehicleInfo)
+                             
+                        })        
+
                     }
                     else {
                         //If phone number and password both exist, he is a registered customer 
