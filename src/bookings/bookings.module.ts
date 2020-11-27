@@ -1,3 +1,7 @@
+/**
+ * Module for booking related requests
+ */
+
 import { Module } from '@nestjs/common';
 import { BookingController } from './bookings.controller';
 import { BookingService } from './bookings.service';

@@ -24,6 +24,8 @@ import { VehicleSchema } from './schema/vehicle.schema';
   ],
   controllers: [CustomerController],
   providers: [CustomerService],
+  exports: [CustomerService]
+
 })
 
 export class CustomerModule { }

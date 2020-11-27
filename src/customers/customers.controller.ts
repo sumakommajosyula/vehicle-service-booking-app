@@ -62,4 +62,17 @@ export class CustomerController {
             return res.status(HttpStatus.OK).json({ status: true, data: customerDetails });
         }
     }
+
+    @Post('login')
+    async loginCustomer(@Res() res: Response, @Body() loginInfo: CustomerPersonalInfoDto) {
+        let loginDetails = await this.customerService.loginCustomer(loginInfo);
+       console.log("response from service: ")
+       console.log(loginDetails)
+        if (loginDetails.status != undefined) {
+            return res.status(HttpStatus.BAD_REQUEST).json(loginDetails);
+        }
+        else {
+            return res.status(HttpStatus.OK).json({ status: true, data: loginDetails });
+        }
+    }
 }

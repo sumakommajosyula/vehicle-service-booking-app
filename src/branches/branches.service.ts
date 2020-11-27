@@ -26,7 +26,7 @@ export class BranchService {
     getBranchInfoById = async (branchId) => {
         console.log("branch id in method");
         console.log(branchId)
-        return await this.branchModel.find({_id: branchId}).exec();
+        return await this.branchModel.findById(branchId).exec();
     }
 
     /**

@@ -2,10 +2,12 @@
  * Controller layer for handling Booking related HTTP requests
 */
 
-import { Controller , Get, Post, Body, Injectable} from '@nestjs/common';
+import { Controller , Get, Post, Body, Res, HttpStatus } from '@nestjs/common';
 import { BookingService } from './bookings.service';
 import { BookingDto } from './bookings.dto';
 import { IBooking } from './bookings.interface';
+import { Response } from 'express';
+
 @Controller('bookings')
 export class BookingController {
 
@@ -23,7 +25,14 @@ export class BookingController {
      * Creates a booking 
      */
     @Post('addBooking')
-    create(@Body() bookingDto: BookingDto): Promise<IBooking> {
-     return this.bookingService.create(bookingDto);
+    async create(@Body() bookingDto: BookingDto, @Res() res: Response){
+        let bookingInformation = await this.bookingService.create(bookingDto);
+
+        if (bookingInformation.status != undefined) {
+            return res.status(HttpStatus.BAD_REQUEST).json(bookingInformation);
+        }
+        else{
+            return res.status(HttpStatus.OK).json({ status: true, data: bookingInformation });
+        }
     }
 }

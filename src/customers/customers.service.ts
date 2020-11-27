@@ -12,6 +12,8 @@ import { ICustomer } from './customers.interface'
 import { v4 as uuid } from 'uuid';
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
+var jwt = require('jsonwebtoken');
+const tokenPassword = 'service.booking@123'
 
 @Injectable()
 export class CustomerService {
@@ -47,6 +49,13 @@ export class CustomerService {
             alternate_drivers: alternateDrivers, vehicles: vehicleInfo}).exec();
     }
 
+    /**
+     * Updates token based on phone number
+    */
+    updateToken = async (phone_number, token) => {
+    return await this.customerModel.findOneAndUpdate({'personal_info.phone_number': phone_number}, 
+    { 'personal_info.token': token}).exec();
+    }
     /**
      * Promise function to call 'getVehicleDetails' method
      * @returns profile id
@@ -97,6 +106,54 @@ export class CustomerService {
     }
 
     /**
+     * Login the customer using mobile number and password
+    */
+    async loginCustomer(loginData: CustomerPersonalInfoDto) : Promise<any>{
+        try{
+            let {phone_number, password} = loginData
+            let customerData = await this.getCustomerInfoByPhoneNumber(phone_number)
+            .then( async responseFromDb => {
+                console.log("responseFromDb")
+                console.log(responseFromDb)
+                if(responseFromDb.length === 0){
+                    //No data present for phone number
+                    console.log("Invalid login details")
+                }
+                else{
+                    let passwordMatch = bcrypt.compareSync(password, responseFromDb[0].personal_info.password);
+                    console.log("password match", passwordMatch)
+                    if(passwordMatch){
+                        var token = jwt.sign({ phone_number: phone_number }, tokenPassword);
+                        //save new token in db
+                        console.log("new token")
+                        console.log(token)
+                        await this.updateToken(phone_number, token)
+                        .then(tokenUpdate => {
+                            console.log("update token : ")
+                            console.log(tokenUpdate)
+                        })
+                        return token
+                    }
+                    else{
+                        let error = { status: false, message: (`Invalid Login details`) };
+                        return error;
+                    }                   
+                }
+            })
+            return customerData
+        }catch(err){
+            return(err)
+        }
+    }
+
+    /**
+     * Find the token
+    */
+    verifyToken = async (token) => {
+        return await this.customerModel.find({ 'personal_info.token': token }).exec();
+    }
+
+    /**
      * Saves customer information in the database
      * @param personalInfo : CustomerPersonalInfoDto
      * @param vehicleInfo: VehicleDto
@@ -128,11 +185,7 @@ export class CustomerService {
                         alternateDrivers.forEach((driver) => {
                             callPromise= (this.getCustomerInfoByPhoneNumberPromise(driver))
                         });
-                        // let promiseArray2 ;
-
-                        // vehicleInfo.forEach((vehicle) => {
-                        //     promiseArray2 = (this.getCustomerInfoByPhoneNumberPromise(vehicle))
-                        // });
+                     
                         return Promise.all([callPromise])
                         .then(alternateDriverIdsResponse => {
                             console.log("response from promise");
@@ -150,7 +203,7 @@ export class CustomerService {
                     }
                     else if(!responseFromDb[0].personal_info.password){
                         //Phone number is present and password is not present => AD user
-                        //Pick id from db and update the password, assign hsi own set of Ads and vehicles, if any
+                        //Pick id from db and update the password, assign his own set of Ads and vehicles, if any
 
                         //For each alternate driver create a profile as customer
                         let promiseArray =[];

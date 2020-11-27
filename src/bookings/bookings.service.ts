@@ -9,6 +9,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { BookingDto } from './bookings.dto';
 import { IBooking } from './bookings.interface';
 import { BranchService } from 'src/branches/branches.service';
+import { error } from 'console';
 
 @Injectable()
 export class BookingService {
@@ -28,7 +29,24 @@ export class BookingService {
      * @returns list of all booking information for a branch
     */
     getBookingInfoByBranchId = async (branchId) => {
-        return await this.bookingModel.find({branch_id : branchId}).populate('branch_id')
+        return await this.bookingModel.find({branch_id : branchId}).exec()
+    }
+
+    /**
+     * Format all dates to get a standard format for comparison
+     */
+    formatDate = (date) => {
+        var d = new Date(date),
+            month = '' + (d.getMonth() + 1),
+            day = '' + d.getDate(),
+            year = d.getFullYear();
+    
+        if (month.length < 2) 
+            month = '0' + month;
+        if (day.length < 2) 
+            day = '0' + day;
+    
+        return [year, month, day].join('-');
     }
 
     /**
@@ -36,71 +54,74 @@ export class BookingService {
     * @param booking : BookingDto
     * @returns booked information
     */   
-    async create(booking: BookingDto): Promise<IBooking> {
+    async create(booking: BookingDto): Promise<any> {
         try{
-            //Call to check which slots are booked
-            let slotsInformation = await this.getBookingInfoByBranchId(booking.branch_id)
-            .then( responseOfBookingData => {
+            let currentdate = this.formatDate(Date.now());
+            let UIBookingDate = this.formatDate(booking.booking_date);
+            if(UIBookingDate === currentdate || UIBookingDate < currentdate){
+                return({status: false, message: "You can book for current / previous dates"}) 
+            }
+            else{
 
-                responseOfBookingData.forEach(async bookingData => {
+                let slotsInformation = await this.getBookingInfoByBranchId(booking.branch_id)
+                .then( async responseOfBookingData => {
+                    let listOftechniciansBooked = [];
 
-                    if(bookingData.slot === booking.slot){
-                        //slot is booked: TBD => Logic to throw error saying this slot is booked
-                        console.log("sorry this slot is occupied")
-                    }
-                    else{
-
-                        /** TBD =>
-                         * slot is available
-                         * check available technicians to assign
-                         * Get booked technicians list from Booking collection for that branch
-                         * Compare it with list of technicians alloted for a branch
-                         * If technicians are unassigned, book one of them
-                         */
-
-                        //FS: using branch id get list of technicians
-                        let getBranchInfo = await this.branchService.getBranchInfoById(booking.branch_id)
-                        let listOftechniciansFromBranch = getBranchInfo[0].technicians
-                        console.log(listOftechniciansFromBranch)
-
-                        //SS: Now get list of technicians in booking collection
-                        console.log("list of techs in booking table")
-                        console.log(responseOfBookingData[0].technician_id)
-
-                        if (listOftechniciansFromBranch.some(e => e.id === responseOfBookingData[0].technician_id)) {
-                            console.log("Technician assigned")
+                    //Loop through booked information list
+                    responseOfBookingData.forEach(async bookingData => {
+                        let bookedDate = this.formatDate(bookingData.booking_date)
+                        
+                        //check if technician is booked or free
+                        if(UIBookingDate === bookedDate){
+                            console.log("This technician is booked")
+                            listOftechniciansBooked.push(bookingData)
                         }
                         else{
-                            console.log("Technician unassigned")
+                            console.log("This technician is free")
+                        }
+
+                    })
+                    
+                    //Call to get get list of technicians in branch collection using branch id 
+                    let getBranchInfo = await this.branchService.getBranchInfoById(booking.branch_id)
+                    getBranchInfo.technicians.forEach(element => {
+                        element["technician_id"] = element.id;
+                        delete element["id"]; 
+                    });
+                    let listOftechniciansFromBranch = getBranchInfo.technicians;
+
+                    //Function to compare booked technicians list and available list
+                    function comparer(otherArray){
+                        return function(current){
+                            return otherArray.filter(function(other){
+                                return other.technician_id == current.technician_id
+                            }).length == 0;
                         }
                     }
-                })
-                
-            })
-            
+                            
+                    let onlyInA = listOftechniciansFromBranch.filter(comparer(listOftechniciansBooked));
+                    let onlyInB = listOftechniciansBooked.filter(comparer(listOftechniciansFromBranch));
+                      
+                    //Gets array of technicians that are still available
+                    let result = onlyInA.concat(onlyInB);
 
-            // .then((resFromPreviousTene)=> {
-
-            //     //FS: using branch id get list of technicians
-            //     console.log("booking.branch_id")
-            //     console.log(booking.branch_id)
-            //     this.getBranchInfoById(booking.branch_id)
-            //     .then(responseFromBranch => {
-            //         let listOftechniciansFromBranch = responseFromBranch
-            //         console.log('.then response')
-            //         console.log(listOftechniciansFromBranch)
-                    
-            //     })
-            //     .catch(error)
-            // })
-            // .catch(error)
-            const newBooking = new this.bookingModel(booking);
-            //return await newBooking.save();
-            return newBooking
-     
+                    if(result.length!= 0){
+                        //Technicians are available
+                        booking["technician_id"] = result[0].technician_id
+                        const newBooking = new this.bookingModel(booking);
+                        return await newBooking.save();  
+                    }
+                    else{
+                        //No technicians available
+                        console.log("No technicians available for this slot");
+                        return({status: false, message: "no technicians available for this slot"}) 
+                    }                              
+                })       
+                return slotsInformation
+            }
         }
         catch(err){
-
+            return (err)
         }
     }
 }

@@ -19,11 +19,11 @@ import { BookingModule } from './bookings/bookings.module';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule{}
-// export class AppModule implements NestModule {
-//   configure(consumer: MiddlewareConsumer) {
-//     consumer
-//       .apply(authMiddleware)
-//       .forRoutes('customer');
-//   }
-// }
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(authMiddleware)
+      .exclude('/customer/login')
+      .forRoutes('customer');
+  }
+}
