@@ -9,13 +9,13 @@ import { InjectModel } from '@nestjs/mongoose';
 import { BookingDto } from './bookings.dto';
 import { IBooking } from './bookings.interface';
 import { BranchService } from 'src/branches/branches.service';
-import { error } from 'console';
+import { CustomerService } from 'src/customers/customers.service';
 
 @Injectable()
 export class BookingService {
     
     constructor(@InjectModel('Booking') private readonly bookingModel:  Model<IBooking>,
-    private readonly branchService: BranchService){}
+    private readonly branchService: BranchService, private readonly customerService: CustomerService){}
 
     /**
      * @returns list of all bookings made
@@ -59,7 +59,7 @@ export class BookingService {
             let currentdate = this.formatDate(Date.now());
             let UIBookingDate = this.formatDate(booking.booking_date);
             if(UIBookingDate === currentdate || UIBookingDate < currentdate){
-                return({status: false, message: "You can book for current / previous dates"}) 
+                return({status: false, message: "You cannot book for current / previous dates"}) 
             }
             else{
 
@@ -81,7 +81,6 @@ export class BookingService {
                         }
 
                     })
-                    
                     //Call to get get list of technicians in branch collection using branch id 
                     let getBranchInfo = await this.branchService.getBranchInfoById(booking.branch_id)
                     getBranchInfo.technicians.forEach(element => {
@@ -105,11 +104,31 @@ export class BookingService {
                     //Gets array of technicians that are still available
                     let result = onlyInA.concat(onlyInB);
 
+                    // TBD => //Get vehicle list using vehicle id
+                    // let vehicleCategory;
+                    // let vehicleList = await this.customerService.getVehicleDetailsById(booking.vehicle_id);
+                    // vehicleList.forEach( vehicleData => {
+                    //     if(vehicleData.id === booking.vehicle_id && vehicleData.category=== "SUV"){
+                    //         vehicleCategory = "SUV"
+                    //     }
+                    // })
+                    //console.log(vehicleCategory)
                     if(result.length!= 0){
                         //Technicians are available
-                        booking["technician_id"] = result[0].technician_id
-                        const newBooking = new this.bookingModel(booking);
-                        return await newBooking.save();  
+                        //if(vehicleCategory === "SUV" && result.length > 1){
+                            booking.technician_id.push(result[0].technician_id);
+                            booking.technician_id.push(result[1].technician_id);
+                            console.log("booking.tech list")
+                            console.log(booking.technician_id)
+                            const newBooking = new this.bookingModel(booking);
+                            return await newBooking.save();  
+                        // }
+                        // else{
+                        //     booking["technician_id"] = result[0].technician_id
+                        //     const newBooking = new this.bookingModel(booking);
+                        //     return await newBooking.save();  
+                        // }
+                        
                     }
                     else{
                         //No technicians available

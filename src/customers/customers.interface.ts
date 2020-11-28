@@ -4,6 +4,7 @@
 import { Document } from 'mongoose';
 
 export interface ICustomer extends Document {
+    [x: string]: any;
     personal_info: {
         id: string
         name: string

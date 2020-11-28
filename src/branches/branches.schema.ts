@@ -35,14 +35,18 @@ export class Branch{
     @Prop()
     created_by: string
 
-    @Prop()
+    @Prop({
+        default: Date.now
+    })     
     creation_date: Date
 
 
     @Prop()
     last_updated_by: string
 
-    @Prop()
+    @Prop({
+        default: Date.now
+    })    
     last_updated_date: Date
 }
 

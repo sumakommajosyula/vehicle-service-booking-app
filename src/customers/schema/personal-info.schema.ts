@@ -23,11 +23,14 @@ export class CustomerPersonalInfo {
     @Prop()
     email: string
 
-    @Prop()
+    @Prop()   
     address: string
 
     @Prop()
     password: string
+
+    @Prop()
+    token: string
 }
 
 export const CustomerSchema = SchemaFactory.createForClass(CustomerPersonalInfo);

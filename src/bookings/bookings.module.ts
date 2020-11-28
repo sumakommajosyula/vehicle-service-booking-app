@@ -8,9 +8,10 @@ import { BookingService } from './bookings.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { BookingSchema } from './bookings.schema';
 import { BranchModule } from 'src/branches/branches.module';
+import { CustomerModule } from 'src/customers/customers.module';
 
 @Module({
-    imports: [BranchModule, MongooseModule.forFeature([{ name: 'Booking', schema: BookingSchema }])],
+    imports: [BranchModule, CustomerModule, MongooseModule.forFeature([{ name: 'Booking', schema: BookingSchema }])],
   controllers: [BookingController],
   providers: [BookingService],
 })

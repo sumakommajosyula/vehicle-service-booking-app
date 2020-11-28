@@ -7,7 +7,7 @@ export class BookingDto {
     branch_id: string
     driver_id: string
     vehicle_id: string
-    technician_id: string
+    technician_id: [string]
     address: string
     status: string
   }

@@ -29,7 +29,7 @@ status: string;
 @Prop({ type: mongoose.Schema.Types.ObjectId, ref: Branch.name})
 branch_id: Branch
 
-@Prop({ type: String, ref: Branch.name})
+@Prop({ type: mongoose.Schema.Types.Array, ref: Branch.name})
 technician_id: [Branch]
 
 @Prop({ type: String, ref: CustomerPersonalInfo.name})
@@ -41,14 +41,17 @@ vehicle_id: Vehicle
 @Prop()
 created_by: String
 
-@Prop()
+@Prop({
+    default: Date.now
+}) 
 creation_date: Date
-
 
 @Prop()
 last_updated_by: String
 
-@Prop()
+@Prop({
+    default: Date.now
+}) 
 last_updated_date: Date
 }
 export const BookingSchema = SchemaFactory.createForClass(Booking);
